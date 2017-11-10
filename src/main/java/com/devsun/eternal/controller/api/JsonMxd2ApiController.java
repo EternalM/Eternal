@@ -1,8 +1,11 @@
 package com.devsun.eternal.controller.api;
 
-import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
+import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Random;
+
+import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -10,134 +13,289 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.devsun.eternal.common.Constants;
-import com.devsun.eternal.model.http.HttpConfig;
-import com.devsun.eternal.model.http.HttpResult1;
-import com.devsun.eternal.service.http.IHttpConfigService;
-import com.devsun.eternal.service.http.IHttpResult1Service;
-import com.devsun.eternal.util.HttpDownUtil;
-import com.devsun.tool.base.DateUtil;
-import com.devsun.tool.base.FileUtil;
-import com.devsun.tool.base.HttpUtil;
-import com.devsun.tool.base.StringUtil;
+import com.devsun.eternal.model.mxd2.Oxanswer;
+import com.devsun.eternal.service.mxd2.IOxanswerService;
 
 @Controller
-@RequestMapping("/api")
+@RequestMapping("/api/mxd2")
 public class JsonMxd2ApiController {
 	
 	@Autowired
-	private IHttpConfigService httpConfigService;
+	private IOxanswerService oxanswerService;
 	
-	@Autowired
-	private IHttpResult1Service httpResult1Service;
-
-	@RequestMapping(value = "/result1.json", method = RequestMethod.GET)
+	private static final ThreadLocal<StringBuffer> MACRO = new ThreadLocal<>();
+	
+	//移动范围
+	private int MOVE_MIN = 200;
+	private int MOVE_MAX = 600;
+	private int MOVE_TIME = 400;
+	
+	//发愣范围
+	private int AWAIT_MIN = 200;
+	private int AWAIT_MAX = 700;
+	
+	//采集按住时间
+	private int ACTION_HOLD_MIN = 50;
+	private int ACTION_HOLD_MAX = 150;
+	
+	//采集等待时间
+	private int ACTION_WAIT_MIN = 2000;
+	private int ACTION_WAIT_MAX = 4000;
+	
+	
+	@RequestMapping(value = "/oxanswer/all.json", method = RequestMethod.GET)
 	@ResponseBody
-	public String result1(){
-		HttpConfig httpConfig = httpConfigService.getResult1Config();
-		if(httpConfig==null){
-			return "config not found";
+	public String oxanswerAll(){
+		List<Oxanswer> list = oxanswerService.getAll();
+		StringBuffer js = new StringBuffer();
+		js.append("var tdQuestions={'xlinfo':{");
+		int index = 0;
+		for(Oxanswer oxanswer : list){
+			js.append("'").append(index).append("'").append(":{'question':'").append(oxanswer.getTitle()).append("','opt1':'").append(oxanswer.getIsTrue()==1?"O":"X").append("'},");
+			index++;
 		}
-		//临时变量
-		String content,url,imageName,imagePath;
-		String[] contentArray;
-		int index;
-		Map<String, String> parameters;
-		HttpResult1 httpResult1;
-		int pages = 0;
-		//获取总页数
-		try {
-			parameters = new HashMap<String, String>();
-			content = httpGet(httpConfig, Constants.HTTP_RESULT1_HOME + "/", parameters);
-			contentArray = content.split("\n");
-			index = 0;
-			for(String tmp : contentArray){
-				if(tmp.indexOf("<div class=\"pages\">")>=0){
-					break;
-				}
-				index++;
-			}
-			String totalPageStr = contentArray[index+1];
-			totalPageStr = totalPageStr.substring(totalPageStr.indexOf("页次:1/")+"页次:1/".length());
-			totalPageStr = totalPageStr.substring(0, totalPageStr.indexOf("页"));
-			pages = Integer.parseInt(totalPageStr);
-		} catch (Exception e) {
-			e.printStackTrace();
-			return "get pages error";
-		}
-		//获取每页内容
-		boolean has = false;
-		for(int i=1;i<=pages;i++){
-			try {
-				if(i==1){
-					url = "/index.shtml";
-				}
-				else{
-					url = "/index"+i+".shtml";
-				}
-				content = httpGet(httpConfig, Constants.HTTP_RESULT1_HOME + url, parameters);
-				contentArray = content.split("\n");
-				for(String tmp : contentArray){
-					if(tmp.indexOf("<li><div class=\"cover\">")<0){
-						continue;
-					}
-					//pUrl
-					String pUrl = tmp.substring(tmp.indexOf("href=\"")+"href=\"".length());
-					pUrl = pUrl.substring(0, pUrl.indexOf("\""));
-					//uuid
-					String uuid = pUrl.substring(Constants.HTTP_RESULT1_HOME.length()+1,pUrl.length()-1);
-					//验证uuid是否重复
-					if(httpResult1Service.selectByUuid(uuid)!=null) {
-						has = true;
-						break;
-					}
-					//image
-					String image = tmp.substring(tmp.indexOf("src=\"")+"src=\"".length());
-					image = image.substring(0, image.indexOf("\""));
-					image = image.replaceAll("\\\\", "/");
-					imagePath = image.substring(0, image.lastIndexOf("/"));
-					imageName = image.substring(image.lastIndexOf("/")+1);
-					//保存image
-					String uploadPath = JsonMxd2ApiController.class.getResource("/").getPath();
-					uploadPath = uploadPath.substring(1,uploadPath.indexOf("WEB-INF"));
-					uploadPath += "upload/";
-					if(!new File(uploadPath+imagePath).exists()) {
-						FileUtil.createDirs(uploadPath+imagePath);
-					}
-					HttpDownUtil.downLoadFromUrl("http://"+httpConfig.getHost()+image, imageName, uploadPath+imagePath);
-					//name
-					String name = tmp.substring(tmp.indexOf("alt=\"")+"alt=\"".length());
-					name = name.substring(0, name.indexOf("\""));
-					//date
-					String dateStr = tmp.substring(tmp.indexOf("<em>更新：")+"<em>更新：".length());
-					dateStr = dateStr.substring(0, dateStr.indexOf("</em>"));
-					//执行保存
-					httpResult1 = new HttpResult1();
-					httpResult1.setId(StringUtil.getUUID());
-					httpResult1.setUuid(uuid);
-					httpResult1.setName(name);
-					httpResult1.setImage(imagePath+"/"+imageName);
-					httpResult1.setpUrl(pUrl);
-					httpResult1.setDate(DateUtil.getDate(dateStr, "yyyy-MM-dd"));
-					httpResult1Service.insert(httpResult1);
-				}
-				System.out.println("page " + i + " success");
-				//已经补充到最新版则跳出
-				if(has) {
-					break;
-				}
-				Thread.sleep(3000);
-			} catch (Exception e) {
-				e.printStackTrace();
-				System.out.println(i+" page error");
+		js.append("}}");
+		return js.toString();
+	}
+	
+	@RequestMapping(value = "/macro/all.json", method = RequestMethod.GET)
+	@ResponseBody
+	public void macroAll(HttpServletResponse response){
+		List<Integer> list = new LinkedList<Integer>();
+		list.add(2);//1
+		list.add(2);//2
+		list.add(2);//3
+		list.add(2);//4
+		list.add(2);//5
+		list.add(2);//6
+		list.add(2);//7
+		list.add(2);//8
+		list.add(2);//9
+		list.add(2);//10
+		list.add(2);//11
+		list.add(2);//12
+		list.add(2);//13
+		StringBuffer stringBuffer = new StringBuffer("<macro name=\"采集\" hidden=\"false\" guid=\"{DE884125-DED1-446B-8C1B-C81ADF189425}\">");
+		stringBuffer.append("\n<multikey xmlns=\"http://www.logitech.com/Cassandra/2010.1/Macros/MultiKey\">");
+		MACRO.set(stringBuffer);
+		for(int i=1;i<=list.size();i++){
+			int times = list.get(i-1);
+			if(times==0){
 				break;
 			}
+			if(i==1){
+				moveInit();
+				action(times);
+				moveRight();
+				action(times);
+			}
+			//偶数
+			else if(i%2==0){
+				moveUp();
+				action(times);
+				moveLeft();
+				action(times);
+			}
+			//奇数
+			else{
+				moveUp();
+				action(times);
+				moveRight();
+				action(times);
+			}
 		}
-		return "1";
+		stringBuffer.append("\n</multikey>");
+		stringBuffer.append("\n</macro>");
+		try {
+			response.reset();
+			response.setContentType("text/plain;charset=UTF-8");
+			response.setCharacterEncoding("UTF-8");
+			response.getWriter().print(stringBuffer.toString());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	
-	private String httpGet(HttpConfig httpConfig, String url, Map<String, String> parameters){
-		String reqUrl = "http://"+httpConfig.getHost()+url;
-		return HttpUtil.getInstance().doGet(reqUrl, parameters, "gbk");
+	/**
+	 * 初始化移动
+	 */
+	private void moveInit(){
+		int ms = random(MOVE_MIN, MOVE_MAX);
+		downUp();
+		delay(ms);
+		upUp();
+		await();
+		//补全
+		if(ms>MOVE_TIME){
+			downDown();
+			delay(ms-MOVE_TIME);
+			upDown();
+		}
+		else{
+			downUp();
+			delay(MOVE_TIME-ms);
+			upUp();
+		}
+		await();
 	}
+	
+	/**
+	 * 向上走
+	 */
+	private void moveUp(){
+		int ms = random(MOVE_MIN, MOVE_MAX);
+		downUp();
+		downLeft();
+		delay(ms);
+		upLeft();
+		upUp();
+		await();
+		//补全
+		if(ms>MOVE_TIME){
+			downRight();
+			downDown();
+			delay(ms-MOVE_TIME);
+			upRight();
+			upDown();
+		}
+		else{
+			downUp();
+			downLeft();
+			delay(MOVE_TIME-ms);
+			upLeft();
+			upUp();
+		}
+	}
+	
+	/**
+	 * 向左走
+	 */
+	private void moveLeft(){
+		int ms = random(MOVE_MIN, MOVE_MAX);
+		downLeft();
+		downDown();
+		delay(ms);
+		upLeft();
+		upDown();
+		await();
+		//补全
+		if(ms>MOVE_TIME){
+			downRight();
+			downUp();
+			delay(ms-MOVE_TIME);
+			upRight();
+			upUp();
+		}
+		else{
+			downLeft();
+			downDown();
+			delay(MOVE_TIME-ms);
+			upLeft();
+			upDown();
+		}
+	}
+	
+	/**
+	 * 向右走
+	 */
+	private void moveRight(){
+		int ms = random(MOVE_MIN, MOVE_MAX);
+		downUp();
+		downRight();
+		delay(ms);
+		upRight();
+		upUp();
+		await();
+		//补全
+		if(ms>MOVE_TIME){
+			downLeft();
+			downDown();
+			delay(ms-MOVE_TIME);
+			upLeft();
+			upDown();
+		}
+		else{
+			downUp();
+			downRight();
+			delay(MOVE_TIME-ms);
+			upRight();
+			upUp();
+		}
+	}
+	
+	/**
+	 * 执行
+	 * @param times
+	 */
+	private void action(int times){
+		downSpacebar();
+		delay(random(ACTION_HOLD_MIN, ACTION_HOLD_MAX));
+		upSpacebar();
+		delay(random(ACTION_WAIT_MIN, ACTION_WAIT_MAX));//等待采集cd
+	}
+	
+	/**
+	 * 发愣
+	 */
+	private void await(){
+		delay(random(AWAIT_MIN, AWAIT_MAX));
+	}
+	
+	/**
+	 * 随机数
+	 * @param min
+	 * @param max
+	 * @return
+	 */
+	private int random(int min, int max){
+		Random random = new Random();
+        return random.nextInt(max)%(max-min+1) + min;
+	}
+	
+	/********************************原始代码************************************/
+	
+	private void downUp(){
+		MACRO.get().append("\n<key direction=\"down\" value=\"UP\"/>");
+	}
+	
+	private void downDown(){
+		MACRO.get().append("\n<key direction=\"down\" value=\"DOWN\"/>");
+	}
+	
+	private void downLeft(){
+		MACRO.get().append("\n<key direction=\"down\" value=\"LEFT\"/>");
+	}
+	
+	private void downRight(){
+		MACRO.get().append("\n<key direction=\"down\" value=\"RIGHT\"/>");
+	}
+	
+	private void downSpacebar(){
+		MACRO.get().append("\n<key direction=\"down\" value=\"SPACEBAR\"/>");
+	}
+	
+	private void upUp(){
+		MACRO.get().append("\n<key direction=\"up\" value=\"UP\"/>");
+	}
+	
+	private void upDown(){
+		MACRO.get().append("\n<key direction=\"up\" value=\"DOWN\"/>");
+	}
+	
+	private void upLeft(){
+		MACRO.get().append("\n<key direction=\"up\" value=\"LEFT\"/>");
+	}
+	
+	private void upRight(){
+		MACRO.get().append("\n<key direction=\"up\" value=\"RIGHT\"/>");
+	}
+	
+	private void upSpacebar(){
+		MACRO.get().append("\n<key direction=\"up\" value=\"SPACEBAR\"/>");
+	}
+	
+	private void delay(int ms){
+		MACRO.get().append("\n<delay milliseconds=\""+ms+"\"/>");
+	}
+
 }
