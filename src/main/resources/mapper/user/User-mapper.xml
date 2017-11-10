@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.devsun.eternal.dao.user.IUserDao">
+	<resultMap id="BaseResultMap" type="com.devsun.eternal.model.user.User">
+		<result column="id" property="id" />
+		<result column="username" property="username" />
+		<result column="realname" property="realname" />
+		<result column="password" property="password" />
+		<result column="email" property="email" />
+		<result column="email_status" property="emailStatus" />
+		<result column="status" property="status" />
+		<result column="type" property="type" />
+		<result column="bank_money" property="bankMoney" />
+		<result column="create_date" property="createDate" />
+		<result column="uuid" property="uuid" />
+		<result column="del_flag" property="delFlag" />
+	</resultMap>
+
+</mapper>

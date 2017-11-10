@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:p="http://www.springframework.org/schema/p" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:cache="http://www.springframework.org/schema/cache"
+	xsi:schemaLocation="  
+         http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
+         http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.2.xsd
+         http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.2.xsd
+         http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.2.xsd
+         http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.2.xsd
+         http://www.springframework.org/schema/cache
+		 http://www.springframework.org/schema/cache/spring-cache.xsd">
+
+	<mvc:annotation-driven/>
+
+	<context:component-scan base-package="com.devsun.eternal.controller"/>
+	
+	<mvc:default-servlet-handler />
+	<!-- 扫描web包，应用Spring的注解 @Controller -->
+	<!-- 默认的注解映射的支持 -->
+	<mvc:annotation-driven>
+		<mvc:message-converters register-defaults="true">
+			<bean class="org.springframework.http.converter.StringHttpMessageConverter">
+				<property name="supportedMediaTypes">
+					<list>
+						<value>text/plain;charset=UTF-8</value>
+					</list>
+				</property>
+			</bean>
+			<bean class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
+				<property name="supportedMediaTypes">
+        			<list>
+        				<value>text/plain;charset=UTF-8</value>
+            			<value>application/json;charset=UTF-8</value>
+       				</list>
+   				</property>
+			</bean> 
+		</mvc:message-converters>
+	</mvc:annotation-driven>
+
+	<!-- CommonsMultipartResolver 控制上传文件大小 -->
+	<bean id="multipartResolver"
+		class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<property name="maxUploadSize" value="1024000000"></property>
+		<property name="maxInMemorySize" value="104857600"></property>
+		<property name="defaultEncoding" value="utf-8"></property>
+	</bean>
+	
+	<!-- 视图解析器 -->
+	<bean class="org.springframework.web.servlet.view.InternalResourceViewResolver" 
+		p:prefix="/WEB-INF/content/"
+		p:suffix=".jsp" 
+	/>
+	
+	<!-- 国际化资源 -->
+	<bean id="messageSource" class="org.springframework.context.support.ResourceBundleMessageSource"
+		p:basename="message"
+	/>
+	
+</beans>

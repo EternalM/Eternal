@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns="http://java.sun.com/xml/ns/javaee"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
+	version="3.0">
+	
+	<context-param>
+		<param-name>contextConfigLocation</param-name>
+		<param-value>classpath:applicationContext.xml</param-value>
+	</context-param>
+	<context-param>
+		<param-name>log4jConfigLocation</param-name>
+		<param-value>classpath:log4j.properties</param-value>
+	</context-param>
+	
+	<!-- 监听 -->
+	<listener>
+		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+	</listener>
+	<listener>
+		<listener-class>org.springframework.web.util.IntrospectorCleanupListener</listener-class>
+	</listener>
+	<listener>
+		<listener-class>org.springframework.web.context.request.RequestContextListener</listener-class>
+	</listener>
+	<!-- 启动项 -->
+	<listener>
+		<listener-class>com.devsun.eternal.listener.MyListener</listener-class>
+	</listener>
+	
+	<!-- 跨域支持 -->
+	<filter>
+	    <filter-name>corsFilter</filter-name>
+	    <filter-class>com.devsun.framework.filter.CorsFilter</filter-class>
+	</filter>
+	<filter-mapping>
+		<filter-name>corsFilter</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+	<!-- 字符集 -->
+	<filter>
+		<filter-name>characterEncodingFilter</filter-name>
+		<filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+		<init-param>
+			<param-name>encoding</param-name>
+			<param-value>UTF-8</param-value>
+		</init-param>
+		<init-param>
+			<param-name>forceEncoding</param-name>
+			<param-value>true</param-value>
+		</init-param>
+	</filter>
+	<filter-mapping>
+		<filter-name>characterEncodingFilter</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+	<!-- 拦截器 -->
+	<filter>
+		<filter-name>myFilter</filter-name>
+		<filter-class>com.devsun.eternal.filter.MyFilter</filter-class>
+	</filter>
+	<filter-mapping>
+		<filter-name>myFilter</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+	
+	<servlet>
+		<servlet-name>springMVC</servlet-name>
+		<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+		<init-param>
+			<param-name>contextConfigLocation</param-name>
+			<param-value>classpath:spring-mvc.xml</param-value>
+		</init-param>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>springMVC</servlet-name>
+		<url-pattern>/</url-pattern>
+	</servlet-mapping>
+	<!-- 验证码 -->
+	<servlet>
+		<servlet-name>kaptcha</servlet-name>
+		<servlet-class>com.google.code.kaptcha.servlet.KaptchaServlet</servlet-class>
+		<!-- 是否显示边框 -->
+		<init-param>
+			<param-name>kaptcha.border</param-name>
+			<param-value>yes</param-value>
+		</init-param>	
+		<!-- 边框颜色，可以使用红,绿,蓝色值设置，或使用red,blue,green色名设置 -->
+		<init-param>
+			<param-name>kaptcha.border.color</param-name>
+			<param-value>blue</param-value>
+		</init-param>
+		<!-- 边框粗细，必须大于0 -->
+		<init-param>
+			<param-name>kaptcha.border.thickness</param-name>
+			<param-value>1</param-value>
+		</init-param>
+		<!-- 宽度 -->
+		<init-param>
+			<param-name>kaptcha.image.width</param-name>
+			<param-value>200</param-value>
+		</init-param>
+		<!-- 高度 -->
+		<init-param>
+			<param-name>kaptcha.image.height</param-name>
+			<param-value>60</param-value>
+		</init-param>
+		<!-- 字符生成器 -->
+		<init-param>
+			<param-name>kaptcha.textproducer.impl</param-name>
+			<param-value>com.google.code.kaptcha.text.impl.DefaultTextCreator</param-value>
+		</init-param>
+		<!-- 用来生成验证码的字符 -->
+		<init-param>
+			<param-name>kaptcha.textproducer.char.string</param-name>
+			<param-value>1234567890</param-value>
+		</init-param>
+		<!-- 验证码长度 -->
+		<init-param>
+			<param-name>kaptcha.textproducer.char.length</param-name>
+			<param-value>4</param-value>
+		</init-param>
+		<!-- 字体列表，用逗号隔开 -->
+		<init-param>
+			<param-name>kaptcha.textproducer.font.names</param-name>
+			<param-value>Arial,Courier</param-value>
+		</init-param>
+		<!-- 字号大小 -->
+		<init-param>
+			<description>The size of the font to use. </description>
+			<param-name>kaptcha.textproducer.font.size</param-name>
+			<param-value>45</param-value>
+		</init-param>
+		<!-- 字体颜色，红,绿,蓝色值或色名-->
+		<init-param>
+			<param-name>kaptcha.textproducer.font.color</param-name>
+			<param-value>yellow</param-value>
+		</init-param>
+		<!-- 噪线生成器 -->
+		<init-param>
+			<param-name>kaptcha.noise.impl</param-name>
+			<param-value>com.google.code.kaptcha.impl.DefaultNoise</param-value>
+		</init-param>
+		<!-- 噪线颜色 -->
+		<init-param>
+			<description>The noise color. Legal values are r,g,b. </description>
+			<param-name>kaptcha.noise.color</param-name>
+			<param-value>red</param-value>
+		</init-param>
+		<!-- 验证码样式 -->
+		<init-param>
+			<param-name>kaptcha.obscurificator.impl</param-name>
+			<param-value>com.google.code.kaptcha.impl.WaterRipple</param-value>
+		</init-param>
+		<!-- 验证码背景 -->
+		<init-param>
+			<param-name>kaptcha.background.impl</param-name>
+			<param-value>com.google.code.kaptcha.impl.DefaultBackground</param-value>
+		</init-param>
+		<!-- 验证码渐进色 从 -->
+		<init-param>
+			<param-name>kaptcha.background.clear.from</param-name>
+			<param-value>white</param-value>
+		</init-param>
+		<!-- 验证码渐进色 到 -->
+		<init-param>
+			<param-name>kaptcha.background.clear.to</param-name>
+			<param-value>blue</param-value>
+		</init-param>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>kaptcha</servlet-name>
+		<url-pattern>/images/vcode.jpg</url-pattern>
+	</servlet-mapping>
+</web-app>

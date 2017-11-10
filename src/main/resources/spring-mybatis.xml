@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:aop="http://www.springframework.org/schema/aop" xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:p="http://www.springframework.org/schema/p" xmlns:tx="http://www.springframework.org/schema/tx"
+    xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:cache="http://www.springframework.org/schema/cache"
+    xsi:schemaLocation="  
+         http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
+         http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.2.xsd
+         http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.2.xsd
+         http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.2.xsd
+         http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.2.xsd
+         http://www.springframework.org/schema/cache
+		 http://www.springframework.org/schema/cache/spring-cache.xsd">
+	
+	<!-- 加载资源文件  其中包含变量信息，必须在Spring配置文件的最前面加载，即第一个加载-->
+	<!-- 未加密版 -->
+	<!--
+	<context:property-placeholder location="classpath:dbconn.properties" />
+	-->
+	<!-- 加密版 -->
+	<bean class="com.devsun.framework.config.EncryptPropertyPlaceholderConfigurer" p:location="classpath:dbconn.properties"></bean>
+	
+	<!-- 事务 -->
+	<tx:annotation-driven/>
+	
+	<!-- 数据源 -->
+	<bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource"
+		p:driverClassName="${jdbc.driverClassName}"
+		p:url="${jdbc.url}"
+		p:username="${jdbc.user}"
+		p:password="${jdbc.pass}"
+	/>
+	
+	<!-- 配置事务管理器 -->
+	<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager"
+		p:dataSource-ref="dataSource"
+	/>
+	
+	<!-- MyBatis SqlSessionFactory -->
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource"/>
+	    <property name="typeAliasesPackage" value="com.devsun.eternal.model"/>
+	    <property name="mapperLocations">
+	        <array>
+	            <value>classpath:mapper/**/*.xml</value>
+	        </array>
+	    </property>
+		<property name="configLocation" value="classpath:spring-mybatis-config.xml"></property>
+	    <property name="plugins">
+	        <array>
+	            <bean class="com.github.pagehelper.PageInterceptor">
+		            <property name="properties">
+						<value>
+							helperDialect=mysql
+							reasonable=true
+							supportMethodsArguments=true
+							params=count=countSql
+							autoRuntimeDialect=true
+						</value>
+	                </property>
+	                <!-- 这里的几个配置主要演示如何使用，如果不理解，一定要去掉下面的配置 -->
+	                <!--
+	                <property name="properties">
+	                    <value>
+	                        helperDialect=mysql
+	                        reasonable=true
+	                        supportMethodsArguments=true
+	                        params=count=countSql
+	                        autoRuntimeDialect=true
+	                    </value>
+	                </property>
+	                -->
+	            </bean>
+	        </array>
+	    </property>
+	</bean>
+	
+	<bean class="tk.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.devsun.eternal.dao"/>
+        <!-- 3.2.2版本新特性，markerInterface可以起到mappers配置的作用，详细情况需要看Marker接口类 -->
+        <property name="markerInterface" value="com.devsun.framework.dao.IBaseDao"/>
+        <!-- 通用Mapper通过属性注入进行配置，默认不配置时会注册Mapper<T>接口
+        <property name="properties">
+            <value>
+                mappers=tk.mybatis.mapper.common.Mapper
+            </value>
+        </property>
+        -->
+    </bean>
+	
+	<!-- 在运行时动态生成MyBatis的SQL调用接口的实现类对象 -->
+	<!-- 
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer" p:basePackage="com.devsun.eternal.dao"/>
+	-->
+	
+</beans>
