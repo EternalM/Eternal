@@ -25,21 +25,26 @@ public class JsonMxd2ApiController {
 	
 	private static final ThreadLocal<StringBuffer> MACRO = new ThreadLocal<>();
 	
+	//初始化移动范围
+	private int MOVE_INIT_MIN = 200;
+	private int MOVE_INIT_MAX = 600;
+	private int MOVE_INIT_TIME = 400;
+	
 	//移动范围
-	private int MOVE_MIN = 200;
-	private int MOVE_MAX = 600;
-	private int MOVE_TIME = 400;
+	private int MOVE_MIN = 400;
+	private int MOVE_MAX = 1000;
+	private int MOVE_TIME = 800;
 	
 	//发愣范围
 	private int AWAIT_MIN = 200;
-	private int AWAIT_MAX = 700;
+	private int AWAIT_MAX = 1000;
 	
 	//采集按住时间
 	private int ACTION_HOLD_MIN = 50;
-	private int ACTION_HOLD_MAX = 150;
+	private int ACTION_HOLD_MAX = 500;
 	
 	//采集等待时间
-	private int ACTION_WAIT_MIN = 2000;
+	private int ACTION_WAIT_MIN = 3000;
 	private int ACTION_WAIT_MAX = 4000;
 	
 	
@@ -62,19 +67,19 @@ public class JsonMxd2ApiController {
 	@ResponseBody
 	public void macroAll(HttpServletResponse response){
 		List<Integer> list = new LinkedList<Integer>();
-		list.add(2);//1
-		list.add(2);//2
-		list.add(2);//3
-		list.add(2);//4
-		list.add(2);//5
-		list.add(2);//6
-		list.add(2);//7
-		list.add(2);//8
-		list.add(2);//9
-		list.add(2);//10
-		list.add(2);//11
-		list.add(2);//12
-		list.add(2);//13
+		list.add(3);//1
+		list.add(7);//2
+		list.add(12);//3
+		list.add(16);//4
+		list.add(21);//5
+		list.add(25);//6
+		list.add(30);//7
+		list.add(36);//8
+		list.add(41);//9
+		list.add(48);//10
+		list.add(59);//11
+		list.add(0);//12
+		list.add(0);//13
 		StringBuffer stringBuffer = new StringBuffer("<macro name=\"采集\" hidden=\"false\" guid=\"{DE884125-DED1-446B-8C1B-C81ADF189425}\">");
 		stringBuffer.append("\n<multikey xmlns=\"http://www.logitech.com/Cassandra/2010.1/Macros/MultiKey\">");
 		MACRO.set(stringBuffer);
@@ -106,6 +111,15 @@ public class JsonMxd2ApiController {
 		}
 		stringBuffer.append("\n</multikey>");
 		stringBuffer.append("\n</macro>");
+		
+//		stringBuffer = new StringBuffer();
+//		for(int i=0;i<987;i++) {
+//			stringBuffer.append("\n<key direction=\"down\" value=\"W\"/>");
+//			stringBuffer.append("\n<delay milliseconds=\""+random(50, 200)+"\"/>");
+//			stringBuffer.append("\n<key direction=\"up\" value=\"W\"/>");
+//			stringBuffer.append("\n<delay milliseconds=\""+random(3000, 4000)+"\"/>");
+//		}
+		
 		try {
 			response.reset();
 			response.setContentType("text/plain;charset=UTF-8");
@@ -120,20 +134,20 @@ public class JsonMxd2ApiController {
 	 * 初始化移动
 	 */
 	private void moveInit(){
-		int ms = random(MOVE_MIN, MOVE_MAX);
+		int ms = random(MOVE_INIT_MIN, MOVE_INIT_MAX);
 		downUp();
 		delay(ms);
 		upUp();
 		await();
 		//补全
-		if(ms>MOVE_TIME){
+		if(ms>MOVE_INIT_TIME){
 			downDown();
-			delay(ms-MOVE_TIME);
+			delay(ms-MOVE_INIT_TIME);
 			upDown();
 		}
 		else{
 			downUp();
-			delay(MOVE_TIME-ms);
+			delay(MOVE_INIT_TIME-ms);
 			upUp();
 		}
 		await();
@@ -228,10 +242,12 @@ public class JsonMxd2ApiController {
 	 * @param times
 	 */
 	private void action(int times){
-		downSpacebar();
-		delay(random(ACTION_HOLD_MIN, ACTION_HOLD_MAX));
-		upSpacebar();
-		delay(random(ACTION_WAIT_MIN, ACTION_WAIT_MAX));//等待采集cd
+		for(int i=0;i<times;i++) {
+			downSpacebar();
+			delay(random(ACTION_HOLD_MIN, ACTION_HOLD_MAX));
+			upSpacebar();
+			delay(random(ACTION_WAIT_MIN, ACTION_WAIT_MAX));//等待采集cd
+		}
 	}
 	
 	/**
