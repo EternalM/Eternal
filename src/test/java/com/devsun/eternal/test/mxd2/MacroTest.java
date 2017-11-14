@@ -1,39 +1,35 @@
-package com.devsun.eternal.controller.api;
+package com.devsun.eternal.test.mxd2;
 
-import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
-import javax.servlet.http.HttpServletResponse;
+import org.junit.Test;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
+import com.devsun.tool.base.FileUtil;
 
-import com.devsun.eternal.model.mxd2.Oxanswer;
-import com.devsun.eternal.service.mxd2.IOxanswerService;
-
-@Controller
-@RequestMapping("/api/mxd2")
-public class JsonMxd2ApiController {
+/**
+ * 用于键盘宏生成
+ * @author eternal
+ *
+ */
+public class MacroTest {
 	
-	@Autowired
-	private IOxanswerService oxanswerService;
+	//输出路径
+	private static final String PATH = "/Volumes/HDD/Users/Eternal/Downloads/mxd2_macro.txt";
 	
+	//线程存储
 	private static final ThreadLocal<StringBuffer> MACRO = new ThreadLocal<>();
 	
 	//初始化移动范围
 	private int MOVE_INIT_MIN = 200;
 	private int MOVE_INIT_MAX = 600;
-	private int MOVE_INIT_TIME = 400;
+	private int MOVE_INIT_TIME = 390;
 	
 	//移动范围
 	private int MOVE_MIN = 400;
 	private int MOVE_MAX = 1000;
-	private int MOVE_TIME = 800;
+	private int MOVE_TIME = 780;
 	
 	//发愣范围
 	private int AWAIT_MIN = 200;
@@ -46,26 +42,9 @@ public class JsonMxd2ApiController {
 	//采集等待时间
 	private int ACTION_WAIT_MIN = 3000;
 	private int ACTION_WAIT_MAX = 4000;
-	
-	
-	@RequestMapping(value = "/oxanswer/all.json", method = RequestMethod.GET)
-	@ResponseBody
-	public String oxanswerAll(){
-		List<Oxanswer> list = oxanswerService.getAll();
-		StringBuffer js = new StringBuffer();
-		js.append("var tdQuestions={'xlinfo':{");
-		int index = 0;
-		for(Oxanswer oxanswer : list){
-			js.append("'").append(index).append("'").append(":{'question':'").append(oxanswer.getTitle()).append("','opt1':'").append(oxanswer.getIsTrue()==1?"O":"X").append("'},");
-			index++;
-		}
-		js.append("}}");
-		return js.toString();
-	}
-	
-	@RequestMapping(value = "/macro/all.json", method = RequestMethod.GET)
-	@ResponseBody
-	public void macroAll(HttpServletResponse response){
+
+	@Test
+	public void run(){
 		List<Integer> list = new LinkedList<Integer>();
 		list.add(3);//1
 		list.add(7);//2
@@ -119,15 +98,7 @@ public class JsonMxd2ApiController {
 //			stringBuffer.append("\n<key direction=\"up\" value=\"W\"/>");
 //			stringBuffer.append("\n<delay milliseconds=\""+random(3000, 4000)+"\"/>");
 //		}
-		
-		try {
-			response.reset();
-			response.setContentType("text/plain;charset=UTF-8");
-			response.setCharacterEncoding("UTF-8");
-			response.getWriter().print(stringBuffer.toString());
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		FileUtil.writeFile(PATH, stringBuffer.toString(), false);
 	}
 	
 	/**
@@ -313,5 +284,5 @@ public class JsonMxd2ApiController {
 	private void delay(int ms){
 		MACRO.get().append("\n<delay milliseconds=\""+ms+"\"/>");
 	}
-
+	
 }

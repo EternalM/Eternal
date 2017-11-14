@@ -98,7 +98,7 @@ public class JsonApiController {
 					imagePath = image.substring(0, image.lastIndexOf("/"));
 					imageName = image.substring(image.lastIndexOf("/")+1);
 					//保存image
-					String uploadPath = JsonMxd2ApiController.class.getResource("/").getPath();
+					String uploadPath = JsonApiController.class.getResource("/").getPath();
 					uploadPath = uploadPath.substring(1,uploadPath.indexOf("WEB-INF"));
 					uploadPath += "upload/";
 					if(!new File(uploadPath+imagePath).exists()) {
