@@ -136,6 +136,35 @@ public class JsonApiController {
 		return "1";
 	}
 	
+	@RequestMapping(value = "/result2.json", method = RequestMethod.GET)
+	@ResponseBody
+	public String result2(){
+//		HttpConfig httpConfig = httpConfigService.getResult1Config();
+//		if(httpConfig==null){
+//			return "config not found";
+//		}
+		HttpConfig httpConfig = new HttpConfig();
+		//1
+		httpConfig.setHost("www.75tvtv.com/list/index57.html");
+		//2
+		httpConfig.setHost("www.75tvtv.com/view/index29382.html");
+		//3
+		httpConfig.setHost("www.75tvtv.com/player/index29382.html?29382-0-0");
+		//临时变量
+		String content,url,imageName,imagePath;
+		String[] contentArray;
+		int index;
+		Map<String, String> parameters;
+		HttpResult1 httpResult1;
+		int pages = 0;
+		parameters = new HashMap<String, String>();
+		content = httpGet(httpConfig, "", parameters);
+		System.out.println(content);
+		//4
+		HttpDownUtil.downLoadFromUrl("https://2017mp4.54popo.com/e/20171116/17/1/xml/91_f96d5f4531d542bbba02a2786c8e0519.mp4", "91_f96d5f4531d542bbba02a2786c8e0519.mp4", "/Volumes/HDD/Users/Eternal/Downloads/");
+		return "1";
+	}
+	
 	private String httpGet(HttpConfig httpConfig, String url, Map<String, String> parameters){
 		String reqUrl = "http://"+httpConfig.getHost()+url;
 		return HttpUtil.getInstance().doGet(reqUrl, parameters, "gbk");
